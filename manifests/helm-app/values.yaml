@@ -4,4 +4,4 @@ svcname: demoappsvc
 acr:
   uri: acr6ppmfq4towtku.azurecr.io
   image: nginx
-  tag: latest
+  tag: 1.0
