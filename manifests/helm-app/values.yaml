@@ -1,0 +1,8 @@
+namespace: demo
+name: demoapp
+svcname: demoappsvc
+acr:
+  uri: acr6ppmfq4towtku.azurecr.io
+  image: nginx
+  tag: latest
+
