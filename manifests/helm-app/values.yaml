@@ -1,4 +1,4 @@
-namespace: demo1
+namespace: demo
 name: demoapp
 svcname: demoappsvc
 acr:
