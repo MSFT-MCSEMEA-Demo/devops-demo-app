@@ -1,7 +1,7 @@
-namespace: demo
+namespace: demo1
 name: demoapp
 svcname: demoappsvc
 acr:
   uri: acr6ppmfq4towtku.azurecr.io
   image: nginx
-  tag: 1.0
+  tag: 2
