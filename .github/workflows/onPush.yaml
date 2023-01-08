@@ -1,0 +1,88 @@
+name: CI pipeline
+env:
+  IMAGE_NAME: 'demoapp'
+on:
+  push:
+    branches: 
+      - "**"
+jobs:
+  Setup_Job:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' 
+    outputs:
+      ver: ${{ steps.vars.outputs.ver }}
+    steps:
+    - name: Use repository
+      uses: actions/checkout@v2
+    - name: Build variables
+      id: vars
+      run: |
+        echo "ver=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT        
+    - name: Upload repository
+      uses: actions/upload-artifact@v2
+      with:
+        name: repository
+        path: |
+          ${{ github.workspace }}/docker
+          ${{ github.workspace }}/.dockerignore
+          ${{ github.workspace }}/main.go
+          ${{ github.workspace }}/main_test.go
+          ${{ github.workspace }}/go.mod
+          ${{ github.workspace }}/go.sum
+  Test:
+    needs: Setup_Job
+    runs-on: ubuntu-latest
+    steps:
+    - name: Use Golang 1.17
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+    - name: Download repository
+      uses: actions/download-artifact@v2
+      with:
+        name: repository
+    - name: Run tests
+      run: go test -v -race -timeout=180s -count=1 -cover ./...
+  Docker:
+    needs: [Setup_Job, Test]
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ needs.Setup_Job.outputs.output_env }}  
+    steps:
+    - name: Download repository
+      uses: actions/download-artifact@v2
+      with:
+        name: repository
+    - name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.30.0
+        inlineScript: |
+          az configure --defaults acr=${{ secrets.ACR_URI }}
+          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -f docker/Dockerfile --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -f docker/Dockerfile --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+
+  # config:
+  #   needs: [Setup_Job, Docker]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Use config repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         repository: ${{ github.repository_owner }}/config
+  #         ref: master
+  #         token: ${{ secrets.ACTIONS_TOKEN }}
+  #     - name: Push commit hash to config repository
+  #       run: |
+  #         echo ${{ needs.setup.outputs.ver }} > infra/helm/pacman/crds/vcs/hash
+  #         git config user.name $(git log -n 1 --pretty=format:%an)
+  #         git config user.email $(git log -n 1 --pretty=format:%ae)
+  #         git commit infra/helm/pacman/crds/vcs/hash -m "pacman ${{ needs.setup.outputs.ver }}"
+  #         git push origin HEADPROJECT_NAME
