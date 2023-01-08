@@ -30,7 +30,7 @@ jobs:
       with:
         name: repository
         path: |
-          ${{ github.workspace }}/docker
+          ${{ github.workspace }}/Dockerfile
           ${{ github.workspace }}/.dockerignore
           ${{ github.workspace }}/main.go
           ${{ github.workspace }}/main_test.go
