@@ -16,12 +16,12 @@ jobs:
       github.event_name == 'push' 
     outputs:
       output_env: ${{ steps.getvariable.outputs.fromenv }}
-      ver: ${{ steps.vars.outputs.ver }}
+      ver: ${{ steps.getvariable.outputs.ver }}
     steps:
     - name: Use repository
       uses: actions/checkout@v2
     - name: Build variables
-      id: vars
+      id: getvariable
       run: |
         echo "fromenv=${{ env.ENVIRONMENT_NAME }}" >> $GITHUB_OUTPUT
         echo "ver=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT        
