@@ -70,8 +70,8 @@ jobs:
         azcliversion: 2.30.0
         inlineScript: |
           az configure --defaults acr=${{ secrets.ACR_URI }}
-          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -r ${{ secrets.ACR_URI }} docker --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -r ${{ secrets.ACR_URI }} docker --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
 
   # config:
   #   needs: [Setup_Job, Docker]
