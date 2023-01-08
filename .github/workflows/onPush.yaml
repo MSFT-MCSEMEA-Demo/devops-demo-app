@@ -43,7 +43,7 @@ jobs:
   #   - name: Run tests
   #     run: go test -v -race -timeout=180s -count=1 -cover ./...
   Docker:
-    needs: [Setup_Job, Test]
+    needs: [Setup_Job]
     runs-on: ubuntu-latest
     environment: 
       name: ${{ needs.Setup_Job.outputs.output_env }}  
