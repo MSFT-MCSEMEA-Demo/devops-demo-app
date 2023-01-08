@@ -28,8 +28,6 @@ jobs:
           ${{ github.workspace }}/.dockerignore
           ${{ github.workspace }}/main.go
           ${{ github.workspace }}/main_test.go
-          ${{ github.workspace }}/go.mod
-          ${{ github.workspace }}/go.sum
   Test:
     needs: Setup_Job
     runs-on: ubuntu-latest
