@@ -26,7 +26,7 @@ jobs:
         echo "fromenv=${{ env.ENVIRONMENT_NAME }}" >> $GITHUB_OUTPUT
         echo "ver=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT        
     - name: Upload repository
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: repository
         path: |
@@ -55,7 +55,7 @@ jobs:
       name: ${{ needs.Setup_Job.outputs.output_env }}  
     steps:
     - name: Download repository
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: repository
     - name: 'Az CLI login'
@@ -70,8 +70,8 @@ jobs:
         azcliversion: 2.30.0
         inlineScript: |
           az configure --defaults acr=${{ secrets.ACR_URI }}
-          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -f docker/Dockerfile --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -f docker/Dockerfile --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -r ${{ secrets.ACR_URI }} docker --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -r ${{ secrets.ACR_URI }} docker --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
 
   # config:
   #   needs: [Setup_Job, Docker]
