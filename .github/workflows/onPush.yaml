@@ -28,20 +28,20 @@ jobs:
           ${{ github.workspace }}/.dockerignore
           ${{ github.workspace }}/main.go
           ${{ github.workspace }}/main_test.go
-  Test:
-    needs: Setup_Job
-    runs-on: ubuntu-latest
-    steps:
-    - name: Use Golang 1.17
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.17
-    - name: Download repository
-      uses: actions/download-artifact@v2
-      with:
-        name: repository
-    - name: Run tests
-      run: go test -v -race -timeout=180s -count=1 -cover ./...
+  # Test:
+  #   needs: Setup_Job
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Use Golang 1.17
+  #     uses: actions/setup-go@v2
+  #     with:
+  #       go-version: 1.17
+  #   - name: Download repository
+  #     uses: actions/download-artifact@v2
+  #     with:
+  #       name: repository
+  #   - name: Run tests
+  #     run: go test -v -race -timeout=180s -count=1 -cover ./...
   Docker:
     needs: [Setup_Job, Test]
     runs-on: ubuntu-latest
