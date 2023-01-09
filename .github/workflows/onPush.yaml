@@ -34,6 +34,27 @@ jobs:
           ${{ github.workspace }}/.dockerignore
           ${{ github.workspace }}/main.go
           ${{ github.workspace }}/main_test.go
+  Get_ACR_Name:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' 
+    outputs:
+      acrname: ${{ steps.getacrname.outputs.acrname }}
+    steps:
+    - name: Use repository
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ github.repository_owner }}/argocd-apps-config
+        ref: main
+        token: ${{ secrets.ACTIONS_TOKEN }}
+    - name: Build variables
+      id: getacrname
+      run: |
+        if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
+          echo "acrname=$(cat helm/demo-app/dynamic/acr-dev)" >> $GITHUB_OUTPUT          
+        else
+          echo "acrname=$(cat helm/demo-app/dynamic/acr-prod)" >> $GITHUB_OUTPUT           
+        fi            
   # Test:
   #   needs: Setup_Job
   #   runs-on: ubuntu-latest
@@ -49,7 +70,7 @@ jobs:
   #   - name: Run tests
   #     run: go test -v -race -timeout=180s -count=1 -cover ./...
   Docker:
-    needs: [Setup_Job]
+    needs: [Setup_Job, Get_ACR_Name]
     runs-on: ubuntu-latest
     environment: 
       name: ${{ needs.Setup_Job.outputs.output_env }}  
@@ -69,9 +90,9 @@ jobs:
       with:
         azcliversion: 2.30.0
         inlineScript: |
-          az configure --defaults acr=${{ secrets.ACR_URI }}
-          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-          az acr import -n ${{ secrets.ACR_URI }} --source ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
+          az configure --defaults acr=${{ needs.Get_ACR_Name.outputs.acrname }}
+          az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
   Config:
     needs: [Setup_Job, Docker]
     runs-on: ubuntu-latest
