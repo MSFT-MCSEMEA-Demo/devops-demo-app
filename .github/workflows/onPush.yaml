@@ -71,8 +71,7 @@ jobs:
         inlineScript: |
           az configure --defaults acr=${{ secrets.ACR_URI }}
           az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-          az acr import -n ${{ secrets.ACR_URI }} --source ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ github.sha }}
-#          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          az acr import -n ${{ secrets.ACR_URI }} --source ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
   Config:
     needs: [Setup_Job, Docker]
     runs-on: ubuntu-latest
@@ -80,13 +79,18 @@ jobs:
     - name: Use config repository
       uses: actions/checkout@v3
       with:
-        repository: ${{ github.repository_owner }}/DevOpsDemo
-        ref: ${{ github.ref }}
+        repository: ${{ github.repository_owner }}/argocd-apps-config
+        ref: main
         token: ${{ secrets.ACTIONS_TOKEN }}
     - name: Push commit hash to IaC repository
-      run: |
-        echo ${{ needs.Setup_Job.outputs.ver }} > helm/demo-app/dynamic/hash
+      run: |        
         git config user.name $(git log -n 1 --pretty=format:%an)
         git config user.email $(git log -n 1 --pretty=format:%ae)
-        git commit helm/demo-app/dynamic/hash -m "demoapp ${{ needs.Setup_Job.outputs.ver }}"
+        if [${{ needs.Setup_Job.outputs.output_env }} == 'dev']; then
+          echo ${{ needs.Setup_Job.outputs.ver }} > helm/demo-app/dynamic/tag-dev
+          git commit helm/demo-app/dynamic/tag-dev -m "demoapp dev ${{ needs.Setup_Job.outputs.ver }}"
+        else
+          echo ${{ needs.Setup_Job.outputs.ver }} > helm/demo-app/dynamic/tag-prod
+          git commit helm/demo-app/dynamic/tag-prod -m "demoapp prod ${{ needs.Setup_Job.outputs.ver }}"
+        fi
         git push origin HEAD
