@@ -24,7 +24,7 @@ jobs:
       id: getvariable
       run: |
         echo "fromenv=${{ env.ENVIRONMENT_NAME }}" >> $GITHUB_OUTPUT
-        echo "ver=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT        
+        echo "ver=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT        
     - name: Upload repository
       uses: actions/upload-artifact@v3
       with:
