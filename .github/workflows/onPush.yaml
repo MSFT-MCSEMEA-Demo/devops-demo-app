@@ -48,7 +48,7 @@ jobs:
         repository: ${{ github.repository_owner }}/argocd-apps-config
         ref: main
         token: ${{ secrets.ACTIONS_TOKEN }}
-    - name: Build variables
+    - name: Get ACR Name
       id: getacrname
       run: |
         if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
