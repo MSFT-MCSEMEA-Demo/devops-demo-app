@@ -19,7 +19,7 @@ jobs:
       ver: ${{ steps.getvariable.outputs.ver }}
     steps:
     - name: Use repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Build variables
       id: getvariable
       run: |
@@ -71,17 +71,17 @@ jobs:
         inlineScript: |
           az configure --defaults acr=${{ secrets.ACR_URI }}
           az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-          az acr import -n ${{ secrets.ACR_URI }} --source ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          az acr import -n ${{ secrets.ACR_URI }} --source ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ github.sha }}
 #          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
   Config:
     needs: [Setup_Job, Docker]
     runs-on: ubuntu-latest
     steps:
     - name: Use config repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: ${{ github.repository_owner }}/DevOpsDemo
-        ref: main
+        ref: dev
         #token: ${{ secrets.ACTIONS_TOKEN }}
     - name: Push commit hash to IaC repository
       run: |
