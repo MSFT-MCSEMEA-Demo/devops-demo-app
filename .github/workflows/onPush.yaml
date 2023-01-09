@@ -85,8 +85,8 @@ jobs:
         token: ${{ secrets.ACTIONS_TOKEN }}
     - name: Push commit hash to IaC repository
       run: |
-        echo ${{ needs.setup.outputs.ver }} > helm/demo-app/external/hash
+        echo ${{ needs.setup.outputs.ver }} > helm/demo-app/dynamic/hash
         git config user.name $(git log -n 1 --pretty=format:%an)
         git config user.email $(git log -n 1 --pretty=format:%ae)
-        git commit infra/helm/pacman/crds/vcs/hash -m "demoapp ${{ needs.setup.outputs.ver }}"
+        git commit helm/demo-app/dynamic/hash -m "demoapp ${{ needs.setup.outputs.ver }}"
         git push origin HEAD
