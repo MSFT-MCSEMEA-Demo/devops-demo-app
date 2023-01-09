@@ -86,7 +86,7 @@ jobs:
       run: |        
         git config user.name $(git log -n 1 --pretty=format:%an)
         git config user.email $(git log -n 1 --pretty=format:%ae)
-        if [${{ needs.Setup_Job.outputs.output_env }} == 'dev']; then
+        if ['${{ needs.Setup_Job.outputs.output_env }}' == 'dev']; then
           echo ${{ needs.Setup_Job.outputs.ver }} > helm/demo-app/dynamic/tag-dev
           git commit helm/demo-app/dynamic/tag-dev -m "demoapp dev ${{ needs.Setup_Job.outputs.ver }}"
         else
