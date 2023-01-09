@@ -1,0 +1,118 @@
+name: CI pipeline
+env:
+  IMAGE_NAME: 'demoapp'
+  ENVIRONMENT_NAME: "${{ github.ref == 'refs/heads/dev' && 'dev' || 'prod' }}"
+on:
+  push:
+    branches: 
+      - "**"
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+jobs:
+  Setup_Job:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' 
+    outputs:
+      output_env: ${{ steps.getvariable.outputs.fromenv }}
+      ver: ${{ steps.getvariable.outputs.ver }}
+    steps:
+    - name: Use repository
+      uses: actions/checkout@v3
+    - name: Build variables
+      id: getvariable
+      run: |
+        echo "fromenv=${{ env.ENVIRONMENT_NAME }}" >> $GITHUB_OUTPUT
+        echo "ver=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT        
+    - name: Upload repository
+      uses: actions/upload-artifact@v3
+      with:
+        name: repository
+        path: |
+          ${{ github.workspace }}/Dockerfile
+          ${{ github.workspace }}/.dockerignore
+          ${{ github.workspace }}/main.go
+          ${{ github.workspace }}/main_test.go
+  Get_ACR_Name:
+    runs-on: ubuntu-latest
+    needs: [Setup_Job]
+    if: |
+      github.event_name == 'push' 
+    outputs:
+      acrname: ${{ steps.getacrname.outputs.acrname }}
+    steps:
+    - name: Use repository
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ github.repository_owner }}/argocd-apps-config
+        ref: main
+        token: ${{ secrets.ACTIONS_TOKEN }}
+    - name: Build variables
+      id: getacrname
+      run: |
+        if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
+          echo "acrname=$(cat helm/demo-app/dynamic/acr-dev)" >> $GITHUB_OUTPUT          
+        else
+          echo "acrname=$(cat helm/demo-app/dynamic/acr-prod)" >> $GITHUB_OUTPUT           
+        fi            
+  # Test:
+  #   needs: Setup_Job
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Use Golang 1.17
+  #     uses: actions/setup-go@v2
+  #     with:
+  #       go-version: 1.17
+  #   - name: Download repository
+  #     uses: actions/download-artifact@v2
+  #     with:
+  #       name: repository
+  #   - name: Run tests
+  #     run: go test -v -race -timeout=180s -count=1 -cover ./...
+  Docker:
+    needs: [Setup_Job, Get_ACR_Name]
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ needs.Setup_Job.outputs.output_env }}  
+    steps:
+    - name: Download repository
+      uses: actions/download-artifact@v3
+      with:
+        name: repository
+    - name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.30.0
+        inlineScript: |
+          az configure --defaults acr=${{ needs.Get_ACR_Name.outputs.acrname }}
+          az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
+  Config:
+    needs: [Setup_Job, Docker]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Use config repository
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ github.repository_owner }}/argocd-apps-config
+        ref: main
+        token: ${{ secrets.ACTIONS_TOKEN }}
+    - name: Push commit hash to IaC repository
+      run: |        
+        git config user.name $(git log -n 1 --pretty=format:%an)
+        git config user.email $(git log -n 1 --pretty=format:%ae)
+        if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
+          echo ${{ needs.Setup_Job.outputs.ver }} > helm/demo-app/dynamic/tag-dev
+          git commit helm/demo-app/dynamic/tag-dev -m "demoapp dev ${{ needs.Setup_Job.outputs.ver }}"
+        else
+          echo ${{ needs.Setup_Job.outputs.ver }} > helm/demo-app/dynamic/tag-prod
+          git commit helm/demo-app/dynamic/tag-prod -m "demoapp prod ${{ needs.Setup_Job.outputs.ver }}"
+        fi
+        git push origin HEAD
