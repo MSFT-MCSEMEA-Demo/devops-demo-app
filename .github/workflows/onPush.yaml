@@ -71,22 +71,22 @@ jobs:
         inlineScript: |
           az configure --defaults acr=${{ secrets.ACR_URI }}
           az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-
-  # config:
-  #   needs: [Setup_Job, Docker]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Use config repository
-  #       uses: actions/checkout@v2
-  #       with:
-  #         repository: ${{ github.repository_owner }}/config
-  #         ref: master
-  #         token: ${{ secrets.ACTIONS_TOKEN }}
-  #     - name: Push commit hash to config repository
-  #       run: |
-  #         echo ${{ needs.setup.outputs.ver }} > infra/helm/pacman/crds/vcs/hash
-  #         git config user.name $(git log -n 1 --pretty=format:%an)
-  #         git config user.email $(git log -n 1 --pretty=format:%ae)
-  #         git commit infra/helm/pacman/crds/vcs/hash -m "pacman ${{ needs.setup.outputs.ver }}"
-  #         git push origin HEADPROJECT_NAME
+          az acr import -n ${{ secrets.ACR_URI }} --source ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:latest -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+#          az acr build -t ${{ secrets.ACR_URI }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -r ${{ secrets.ACR_URI }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+  Config:
+    needs: [Setup_Job, Docker]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Use config repository
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ github.repository_owner }}/DevOpsDemo
+        ref: main
+        #token: ${{ secrets.ACTIONS_TOKEN }}
+    - name: Push commit hash to IaC repository
+      run: |
+        echo ${{ needs.setup.outputs.ver }} > helm/demo-app/external/hash
+        git config user.name $(git log -n 1 --pretty=format:%an)
+        git config user.email $(git log -n 1 --pretty=format:%ae)
+        git commit infra/helm/pacman/crds/vcs/hash -m "demoapp ${{ needs.setup.outputs.ver }}"
+        git push origin HEAD
