@@ -102,9 +102,16 @@ jobs:
             if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
               az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --force --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -t ${{ env.IMAGE_NAME }}:latest
             fi
+            docker save -o scanimage.tar ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
           else
             az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+            docker save -o scanimage.tar ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
           fi
+    - name: Run Trivy vulnerability scanner in tarball mode
+      uses: aquasecurity/trivy-action@master
+      with:
+        input: /github/workspace/vuln-image.tar
+        severity: 'CRITICAL,HIGH'          
   Config:
     needs: [Setup_Job, Docker]
     runs-on: ubuntu-latest
