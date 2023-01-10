@@ -97,8 +97,12 @@ jobs:
         azcliversion: 2.30.0
         inlineScript: |
           az configure --defaults acr=${{ needs.Get_ACR_Name.outputs.acrname }}
-          az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-          az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
+          if [[ '${{ github.event_name }}' == 'push' ]]; then
+            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+            az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
+          else
+            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+          fi
   Config:
     needs: [Setup_Job, Docker]
     runs-on: ubuntu-latest
