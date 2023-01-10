@@ -98,8 +98,10 @@ jobs:
         inlineScript: |
           az configure --defaults acr=${{ needs.Get_ACR_Name.outputs.acrname }}
           if [[ '${{ github.event_name }}' == 'push' ]]; then
-            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-            az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }}
+            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+            if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
+              az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -t ${{ env.IMAGE_NAME }}:latest
+            fi
           else
             az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
           fi
