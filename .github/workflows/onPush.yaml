@@ -24,7 +24,7 @@ jobs:
       id: getvariable
       run: |
         echo "fromenv=${{ env.ENVIRONMENT_NAME }}" >> $GITHUB_OUTPUT
-        echo "ver=${{ env.ENVIRONMENT_NAME }}_$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT        
+        echo "ver=${{ env.ENVIRONMENT_NAME }}_$(date +'%Y%m%d')_$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT        
     - name: Upload repository
       uses: actions/upload-artifact@v3
       with:
@@ -61,15 +61,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Use Golang 1.17
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
        go-version: 1.17
     - name: Download repository
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: repository
     - name: Run tests
-
       run: |
         go env -w GO111MODULE=off
         go test -v -race -timeout=180s -count=1 -cover ./...
