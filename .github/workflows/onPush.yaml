@@ -3,6 +3,9 @@ env:
   IMAGE_NAME: 'demoapp'
   ENVIRONMENT_NAME: "${{ github.ref == 'refs/heads/dev' && 'dev' || 'prod' }}"
 on:
+  release:
+    types:
+      - released
   push:
     branches: 
       - "**"
@@ -12,8 +15,6 @@ permissions:
 jobs:
   Setup_Job:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' 
     outputs:
       output_env: ${{ steps.getvariable.outputs.fromenv }}
       ver: ${{ steps.getvariable.outputs.ver }}
@@ -24,7 +25,11 @@ jobs:
       id: getvariable
       run: |
         echo "fromenv=${{ env.ENVIRONMENT_NAME }}" >> $GITHUB_OUTPUT
-        echo "ver=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT        
+        if [[ '${{ github.event_name }}' == 'push' ]]; then
+          echo "ver=${{ env.ENVIRONMENT_NAME }}_$(date +'%Y%m%d')_$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT
+        else
+          echo "ver=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        fi
     - name: Upload repository
       uses: actions/upload-artifact@v3
       with:
@@ -37,8 +42,6 @@ jobs:
   Get_ACR_Name:
     runs-on: ubuntu-latest
     needs: [Setup_Job]
-    if: |
-      github.event_name == 'push' 
     outputs:
       acrname: ${{ steps.getacrname.outputs.acrname }}
     steps:
@@ -56,22 +59,24 @@ jobs:
         else
           echo "acrname=$(cat helm/demo-app/dynamic/acr-prod)" >> $GITHUB_OUTPUT           
         fi            
-  # Test:
-  #   needs: Setup_Job
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Use Golang 1.17
-  #     uses: actions/setup-go@v2
-  #     with:
-  #       go-version: 1.17
-  #   - name: Download repository
-  #     uses: actions/download-artifact@v2
-  #     with:
-  #       name: repository
-  #   - name: Run tests
-  #     run: go test -v -race -timeout=180s -count=1 -cover ./...
+  Test:
+    needs: Setup_Job
+    runs-on: ubuntu-latest
+    steps:
+    - name: Use Golang 1.17
+      uses: actions/setup-go@v3
+      with:
+       go-version: 1.17
+    - name: Download repository
+      uses: actions/download-artifact@v3
+      with:
+        name: repository
+    - name: Run tests
+      run: |
+        go env -w GO111MODULE=off
+        go test -v -race -timeout=180s -count=1 -cover ./...
   Docker:
-    needs: [Setup_Job, Get_ACR_Name]
+    needs: [Setup_Job, Test, Get_ACR_Name]
     runs-on: ubuntu-latest
     environment: 
       name: ${{ needs.Setup_Job.outputs.output_env }}  
