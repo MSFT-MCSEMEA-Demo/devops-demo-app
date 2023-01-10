@@ -11,10 +11,12 @@ var ver string
 func main() {
 	rtr := http.DefaultServeMux
 	rtr.HandleFunc("/", home{}.handle)
-
+	//not real connectionstring only for demo purposes
+	connstring := "DefaultEndpointsProtocol=https;AccountName=ypdemodevstorage;AccountKey=123RRiXSui754qt/QDnTQbZRAFGDH4e1IyNZj4EnKP/R2v5ACoNGuZM9yg1TAmS7lVoc1hWp3luC+AStfNEzZw==;EndpointSuffix=core.windows.net"
 	addr := os.Getenv("HTTP_ADDR")
 
 	log.Printf("%s: info: http listen and serve demoapp: %s", ver, addr)
+	log.Printf(connstring)
 	if err := http.ListenAndServe(addr, rtr); err != nil && err != http.ErrServerClosed {
 		log.Printf("%s: error: http listen and serve demoapp: %s", ver, err)
 	}

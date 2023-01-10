@@ -75,7 +75,7 @@ jobs:
       run: |
         go env -w GO111MODULE=off
         go test -v -race -timeout=180s -count=1 -cover ./...
-  Docker:
+  Docker_Build_Push:
     needs: [Setup_Job, Test, Get_ACR_Name]
     runs-on: ubuntu-latest
     environment: 
@@ -101,12 +101,12 @@ jobs:
             az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
             if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
               az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --force --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -t ${{ env.IMAGE_NAME }}:latest
-            fi
+            fi            
           else
-            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
-          fi
+            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}            
+          fi    
   Config:
-    needs: [Setup_Job, Docker]
+    needs: [Setup_Job, Docker_Build_Push]
     runs-on: ubuntu-latest
     steps:
     - name: Use config repository
