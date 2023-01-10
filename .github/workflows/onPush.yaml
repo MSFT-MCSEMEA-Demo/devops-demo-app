@@ -75,7 +75,7 @@ jobs:
       run: |
         go env -w GO111MODULE=off
         go test -v -race -timeout=180s -count=1 -cover ./...
-  Docker:
+  Docker_Build_Push_Scan:
     needs: [Setup_Job, Test, Get_ACR_Name]
     runs-on: ubuntu-latest
     environment: 
@@ -107,8 +107,8 @@ jobs:
           fi
     - name: Generate tarball from image
       run: |
-        docker pull nginx
-        docker save -o scanimage.tar nginx
+        docker build -t scanimage .
+        docker save -o scanimage.tar scanimage
     - name: Run Trivy vulnerability scanner in tarball mode
       uses: aquasecurity/trivy-action@master
       with:
