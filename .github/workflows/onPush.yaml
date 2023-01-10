@@ -115,7 +115,7 @@ jobs:
         input: /github/workspace/scanimage.tar
         severity: 'CRITICAL,HIGH'          
   Config:
-    needs: [Setup_Job, Docker]
+    needs: [Setup_Job, Docker_Build_Push_Scan]
     runs-on: ubuntu-latest
     steps:
     - name: Use config repository
