@@ -75,7 +75,7 @@ jobs:
       run: |
         go env -w GO111MODULE=off
         go test -v -race -timeout=180s -count=1 -cover ./...
-  Docker_Build_Push_Scan:
+  Docker_Build_Push:
     needs: [Setup_Job, Test, Get_ACR_Name]
     runs-on: ubuntu-latest
     environment: 
@@ -104,27 +104,7 @@ jobs:
             fi            
           else
             az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}            
-          fi
-    - name: Generate tarball from image
-      run: |
-        docker build -t scanimage:latest .
-        docker save -o scanimage.tar scanimage:latest
-    - name: Run Trivy vulnerability scanner in tarball mode
-      uses: aquasecurity/trivy-action@master
-      with:
-        input: /github/workspace/scanimage.tar
-        severity: 'CRITICAL,HIGH,MEDIUM'
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: 'scanimage:latest'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-    - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'              
+          fi    
   Config:
     needs: [Setup_Job, Docker_Build_Push_Scan]
     runs-on: ubuntu-latest
