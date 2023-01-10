@@ -106,7 +106,7 @@ jobs:
             az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}            
           fi    
   Config:
-    needs: [Setup_Job, Docker_Build_Push_Scan]
+    needs: [Setup_Job, Docker_Build_Push]
     runs-on: ubuntu-latest
     steps:
     - name: Use config repository
