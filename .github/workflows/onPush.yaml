@@ -62,7 +62,7 @@ jobs:
           echo "acrname=$(cat helm/demo-app/dynamic/acr-prod)" >> $GITHUB_OUTPUT  
           echo "rgname=$(cat global/rg-prod)" >> $GITHUB_OUTPUT         
         fi            
-  Test:
+  Test-Push:
     needs: Setup_Job
     runs-on: ubuntu-latest
     steps:
