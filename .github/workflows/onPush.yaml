@@ -44,6 +44,7 @@ jobs:
     needs: [Setup_Job]
     outputs:
       acrname: ${{ steps.getacrname.outputs.acrname }}
+      rgname: ${{ steps.getacrname.outputs.rgname }}
     steps:
     - name: Use repository
       uses: actions/checkout@v3
@@ -55,9 +56,11 @@ jobs:
       id: getacrname
       run: |
         if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
-          echo "acrname=$(cat helm/demo-app/dynamic/acr-dev)" >> $GITHUB_OUTPUT          
+          echo "acrname=$(cat helm/demo-app/dynamic/acr-dev)" >> $GITHUB_OUTPUT
+          echo "rgname=$(cat global/rg-dev)" >> $GITHUB_OUTPUT
         else
-          echo "acrname=$(cat helm/demo-app/dynamic/acr-prod)" >> $GITHUB_OUTPUT           
+          echo "acrname=$(cat helm/demo-app/dynamic/acr-prod)" >> $GITHUB_OUTPUT  
+          echo "rgname=$(cat global/rg-prod)" >> $GITHUB_OUTPUT         
         fi            
   Test:
     needs: Setup_Job
@@ -98,12 +101,12 @@ jobs:
         inlineScript: |
           az configure --defaults acr=${{ needs.Get_ACR_Name.outputs.acrname }}
           if [[ '${{ github.event_name }}' == 'push' ]]; then
-            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
+            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -g ${{ needs.Get_ACR_Name.outputs.rgname }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
             if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
-              az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --force --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -t ${{ env.IMAGE_NAME }}:latest
+              az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --force -g ${{ needs.Get_ACR_Name.outputs.rgname }} --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -t ${{ env.IMAGE_NAME }}:latest
             fi            
           else
-            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}            
+            az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -g ${{ needs.Get_ACR_Name.outputs.rgname }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}            
           fi    
   UpdateArgoCDAppConfig:
     needs: [Setup_Job, Docker_Build_Push]
