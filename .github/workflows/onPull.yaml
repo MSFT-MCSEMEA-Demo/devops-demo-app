@@ -19,7 +19,7 @@ jobs:
           ${{ github.workspace }}/main_test.go
           ${{ github.workspace }}/go.mod
           ${{ github.workspace }}/go.sum 
-  test:
+  Test_Pull:
     needs: setup
     runs-on: ubuntu-latest
     steps:

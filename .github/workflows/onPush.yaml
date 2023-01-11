@@ -62,7 +62,7 @@ jobs:
           echo "acrname=$(cat helm/demo-app/dynamic/acr-prod)" >> $GITHUB_OUTPUT  
           echo "rgname=$(cat global/rg-prod)" >> $GITHUB_OUTPUT         
         fi            
-  Test:
+  Test_Push:
     needs: Setup_Job
     runs-on: ubuntu-latest
     steps:
@@ -79,7 +79,7 @@ jobs:
         go env -w GO111MODULE=off
         go test -v -race -timeout=180s -count=1 -cover ./...
   Docker_Build_Push:
-    needs: [Setup_Job, Test, Get_ACR_Name]
+    needs: [Setup_Job, Test_Push, Get_ACR_Name]
     runs-on: ubuntu-latest
     environment: 
       name: ${{ needs.Setup_Job.outputs.output_env }}  
