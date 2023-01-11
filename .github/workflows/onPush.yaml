@@ -105,7 +105,7 @@ jobs:
           else
             az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}            
           fi    
-  Config:
+  UpdateArgoCDAppConfig:
     needs: [Setup_Job, Docker_Build_Push]
     runs-on: ubuntu-latest
     steps:
