@@ -17,8 +17,9 @@ Additional security scanning which being used in the demo are:
 ## pre-requisites
 1. Azure subscription
 2. Under Settings of current GitHub repo - create three GitHub environments in GitHub: dev, prod, whatif. for prod environment setup a need for manual approval.
-3. Configure OpenID Connect in Azure. After completing the instructions, the following secrets should be created in your repo secrets: AZURE_CLIENT_ID, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID - you will need to add three entries for each 'Environment' types: dev, prod and whatif
+3. Configure OpenID Connect in Azure. After completing the instructions, the following secrets should be created in your repo secrets: AZURE_CLIENT_ID, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID - you will need to add three entries for each 'Environment' types: dev and prod
 4. Setup dev and main branches and use branch protection in GitHub to require Pull Request when target branch is: main
+5. Enable depandabot, code scanning and secret alerts under the Security tab in GitHub 
 
 ## repo review
 1. root: go application with tests
