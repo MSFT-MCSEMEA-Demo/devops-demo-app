@@ -103,7 +103,7 @@ jobs:
           if [[ '${{ github.event_name }}' == 'push' ]]; then
             az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -g ${{ needs.Get_ACR_Name.outputs.rgname }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}
             if [[ '${{ needs.Setup_Job.outputs.output_env }}' == 'dev' ]]; then
-              az acr import -n ${{ needs.Get_ACR_Name.outputs.acrname }} --force -g ${{ needs.Get_ACR_Name.outputs.rgname }} --source ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -t ${{ env.IMAGE_NAME }}:latest
+              az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:latest -g ${{ needs.Get_ACR_Name.outputs.rgname }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=latest
             fi            
           else
             az acr build -t ${{ needs.Get_ACR_Name.outputs.acrname }}/${{ env.IMAGE_NAME }}:${{ needs.Setup_Job.outputs.ver }} -g ${{ needs.Get_ACR_Name.outputs.rgname }} -r ${{ needs.Get_ACR_Name.outputs.acrname }} . --build-arg VER=${{ needs.Setup_Job.outputs.ver }}            
