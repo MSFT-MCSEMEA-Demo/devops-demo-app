@@ -26,5 +26,5 @@ type home struct{}
 
 func (h home) handle(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s: info: X-Request-ID: %s\n", ver, r.Header.Get("X-Request-ID"))
-	_, _ = w.Write([]byte("Hello world - demoapp image demo tag:" + ver))
+	_, _ = w.Write([]byte("Hello world bla b- demoapp image demo tag:" + ver))
 }
